@@ -1,0 +1,12 @@
+[package]
+name = "secured_linked_list"
+version = "0.1.0"
+description = "Secured Linked List"
+license = "MIT OR BSD-3-Clause"
+repository = "https://github.com/maidsafe/secured_linked_list"
+documentation = "https://docs.rs/secured_linked_list"
+keywords = [ "Safe", "Network", "SafeNetwork" ]
+authors = [ "MaidSafe Developers <dev@maidsafe.net>" ]
+edition = "2018"
+
+[dependencies]
