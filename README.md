@@ -1,5 +1,5 @@
 # secured_linked_list
-Secured Linked List
+Secured Linked List - a cryptographically secured and provable linked list.
 
 |Crate|Documentation|CI|Safe Rust|
 |:-:|:-:|:-:|:-:|

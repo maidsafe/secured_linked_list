@@ -1,7 +1,7 @@
 [package]
 name = "secured_linked_list"
 version = "0.1.0"
-description = "Secured Linked List"
+description = "A cryptographically secured and provable linked list"
 license = "MIT OR BSD-3-Clause"
 repository = "https://github.com/maidsafe/secured_linked_list"
 documentation = "https://docs.rs/secured_linked_list"
@@ -10,3 +10,14 @@ authors = [ "MaidSafe Developers <dev@maidsafe.net>" ]
 edition = "2018"
 
 [dependencies]
+bincode = "1.2.1"
+itertools = "~0.9.0"
+thiserror = "1.0.23"
+
+  [dependencies.bls]
+  package = "threshold_crypto"
+  version = "~0.4.0"
+
+  [dependencies.serde]
+  version = "1.0.117"
+  features = [ "derive" ]
