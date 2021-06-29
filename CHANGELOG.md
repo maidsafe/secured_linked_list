@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/maidsafe/secured_linked_list/compare/v0.1.3...v0.2.0) (2021-06-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* updates to use blsstc
+
+### Features
+
+* introducing blsstc ([731cbe4](https://github.com/maidsafe/secured_linked_list/commit/731cbe4a7ffea73fc07bbea0b8786732c7c50ccb))
+
 ### [0.1.3](https://github.com/maidsafe/secured_linked_list/compare/v0.1.2...v0.1.3) (2021-06-28)
 
 
