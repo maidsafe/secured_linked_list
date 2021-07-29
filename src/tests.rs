@@ -558,6 +558,76 @@ fn main_branch_len() {
     assert_eq!(chain.main_branch_len(), 2);
 }
 
+#[test]
+fn self_verify() {
+    let (sk0, pk0) = gen_keypair();
+    let (sk1, pk1, sig1) = gen_signed_keypair(&sk0);
+    let (_, pk2, sig2) = gen_signed_keypair(&sk1);
+
+    // make a chain with valid signatures
+    // 0->1->2
+    let mut main_chain = make_chain(pk0, vec![(&pk0, pk1, sig1), (&pk1, pk2, sig2)]);
+
+    assert!(main_chain.self_verify());
+
+    // create a fork (from block #1) with valid signatures
+    // 0->1->2
+    //     |
+    //     +->3->4
+    let (sk3, pk3, sig3) = gen_signed_keypair(&sk1);
+    let (_, pk4, sig4) = gen_signed_keypair(&sk3);
+    let fork_chain = make_chain(pk1, vec![(&pk1, pk3, sig3), (&pk3, pk4, sig4)]);
+
+    assert_eq!(main_chain.merge(fork_chain), Ok(()));
+    assert!(main_chain.self_verify());
+
+    // create another fork (from root key) with valid signatures
+    // 0->1->2
+    //  |  |
+    //  |  +->3->4
+    //  +->5->6
+    let (sk5, pk5, sig5) = gen_signed_keypair(&sk0);
+    let (_, pk6, sig6) = gen_signed_keypair(&sk5);
+    let fork_chain = make_chain(pk0, vec![(&pk0, pk5, sig5), (&pk5, pk6, sig6)]);
+
+    assert_eq!(main_chain.merge(fork_chain), Ok(()));
+    assert!(main_chain.self_verify());
+}
+
+#[test]
+fn self_verify_invalid_sigs() {
+    let (sk0, pk0) = gen_keypair();
+    let (sk1, pk1, sig1) = gen_signed_keypair(&sk0);
+    let (_, pk2, sig2) = gen_signed_keypair(&sk1);
+
+    let (sk3, pk3, sig3) = gen_signed_keypair(&sk1);
+    let (_, pk4, sig4) = gen_signed_keypair(&sk3);
+
+    // make a chain with a fork but an invalid signature in block #3
+    // 0->1->2
+    //     |
+    //     +->3->4
+    let mut main_chain = make_chain(
+        pk0,
+        vec![
+            (&pk0, pk1, sig1),
+            (&pk1, pk2, sig2),
+            (&pk1, pk3, sig3),
+            (&pk3, pk4, sig4.clone()),
+        ],
+    );
+
+    // let's corrupt signature of block #3
+    let corrupted_block = Block {
+        key: pk3,
+        signature: sig4, // this invalidates the chain signatures, the valid one is sig3
+        parent_index: 1, // this links it to pk1
+    };
+    let _ = std::mem::replace(&mut main_chain.tree[2], corrupted_block);
+
+    assert!(!main_chain.self_verify());
+}
+
 fn gen_keypair() -> (bls::SecretKey, bls::PublicKey) {
     let sk = bls::SecretKey::random();
     let pk = sk.public_key();

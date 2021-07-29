@@ -275,6 +275,20 @@ impl SecuredLinkedList {
         self.keys().any(|existing_key| existing_key == key)
     }
 
+    /// Verify every BLS key in this chain is proven (signed) by its parent key,
+    /// except the first one.
+    pub fn self_verify(&self) -> bool {
+        self.tree.iter().all(|block| {
+            let parent_key = if block.parent_index > 0 {
+                &self.tree[block.parent_index - 1].key
+            } else {
+                &self.root
+            };
+
+            block.verify(parent_key)
+        })
+    }
+
     /// Given a collection of keys that are already trusted, returns whether this chain is also
     /// trusted. A chain is considered trusted only if at least one of the `trusted_keys` is on its
     /// main branch.
