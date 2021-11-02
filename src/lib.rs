@@ -262,6 +262,11 @@ impl SecuredLinkedList {
             .unwrap_or(&self.root)
     }
 
+    /// Returns the last block found in this chain.
+    pub fn last_block(&self) -> Option<&Block> {
+        self.tree.last()
+    }
+
     /// Returns the parent key of the last key or the root key if this chain has only one key.
     pub fn prev_key(&self) -> &bls::PublicKey {
         self.branch(self.tree.len())

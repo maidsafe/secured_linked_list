@@ -10,14 +10,14 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub(crate) struct Block {
-    pub(crate) key: bls::PublicKey,
-    pub(crate) signature: bls::Signature,
-    pub(crate) parent_index: usize,
+pub struct Block {
+    pub key: bls::PublicKey,
+    pub signature: bls::Signature,
+    pub parent_index: usize,
 }
 
 impl Block {
-    pub(crate) fn verify(&self, parent_key: &bls::PublicKey) -> bool {
+    pub fn verify(&self, parent_key: &bls::PublicKey) -> bool {
         bincode::serialize(&self.key)
             .map(|bytes| parent_key.verify(&self.signature, &bytes))
             .unwrap_or(false)
