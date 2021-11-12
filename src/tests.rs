@@ -32,6 +32,11 @@ fn insert_last() {
 
 #[test]
 fn insert_fork() {
+    // We use a chain with two branches, a and b:
+    //  pk0 -> pk1_a -> pk2_a
+    //     |
+    //     +-> pk1_b
+    //
     let (sk0, pk0) = gen_keypair();
     let (sk1_a, pk1_a, sig1_a) = gen_signed_keypair(&sk0);
     let (_, pk2_a, sig2_a) = gen_signed_keypair(&sk1_a);
@@ -40,7 +45,11 @@ fn insert_fork() {
     let mut chain = SecuredLinkedList::new(pk0);
     assert_eq!(chain.insert(&pk0, pk1_a, sig1_a), Ok(()));
     assert_eq!(chain.insert(&pk1_a, pk2_a, sig2_a), Ok(()));
-    assert_eq!(chain.insert(&pk0, pk1_b, sig1_b), Ok(()));
+    let branch_a_only = chain.clone();
+
+    assert_eq!(chain.insert(&pk0, pk1_b, sig1_b.clone()), Ok(()));
+    let mut branch_b_only = SecuredLinkedList::new(pk0);
+    assert_eq!(branch_b_only.insert(&pk0, pk1_b, sig1_b), Ok(()));
 
     let expected_keys = if pk1_a > pk1_b {
         vec![&pk0, &pk1_b, &pk1_a, &pk2_a]
@@ -51,6 +60,22 @@ fn insert_fork() {
     let actual_keys: Vec<_> = chain.keys().collect();
 
     assert_eq!(actual_keys, expected_keys);
+
+    assert_eq!(
+        chain.get_proof_chain(&pk0, &pk0),
+        Ok(SecuredLinkedList::new(pk0))
+    );
+    assert_eq!(chain.get_proof_chain(&pk0, &pk2_a), Ok(branch_a_only));
+    assert_eq!(chain.get_proof_chain(&pk0, &pk1_b), Ok(branch_b_only));
+
+    assert_eq!(
+        chain.get_proof_chain(&pk2_a, &pk0),
+        Err(Error::SubChainNotFound)
+    );
+    assert_eq!(
+        chain.get_proof_chain(&pk1_a, &pk1_b),
+        Err(Error::SubChainNotFound)
+    );
 }
 
 #[test]
@@ -204,7 +229,7 @@ fn invalid_deserialized_chain_wrong_unrelated_block_order() {
 }
 
 #[test]
-fn merge() {
+fn join() {
     let (sk0, pk0) = gen_keypair();
     let (sk1, pk1, sig1) = gen_signed_keypair(&sk0);
     let (sk2, pk2, sig2) = gen_signed_keypair(&sk1);
@@ -222,21 +247,21 @@ fn merge() {
         ],
     );
     let rhs = make_chain(pk2, vec![(&pk2, pk3, sig3.clone())]);
-    assert_eq!(merge_chains(lhs, rhs), Ok(vec![pk0, pk1, pk2, pk3]));
+    assert_eq!(join_chains(lhs, rhs), Ok(vec![pk0, pk1, pk2, pk3]));
 
     // lhs: 1->2->3
     // rhs: 0->1
     // out: 0->1->2->3
     let lhs = make_chain(pk1, vec![(&pk1, pk2, sig2), (&pk2, pk3, sig3.clone())]);
     let rhs = make_chain(pk0, vec![(&pk0, pk1, sig1.clone())]);
-    assert_eq!(merge_chains(lhs, rhs), Ok(vec![pk0, pk1, pk2, pk3]));
+    assert_eq!(join_chains(lhs, rhs), Ok(vec![pk0, pk1, pk2, pk3]));
 
     // lhs: 0->1
     // rhs: 2->3
     // out: Err(Incompatible)
     let lhs = make_chain(pk0, vec![(&pk0, pk1, sig1)]);
     let rhs = make_chain(pk2, vec![(&pk2, pk3, sig3)]);
-    assert_eq!(merge_chains(lhs, rhs), Err(Error::InvalidOperation));
+    assert_eq!(join_chains(lhs, rhs), Err(Error::InvalidOperation));
 }
 
 #[test]
@@ -259,7 +284,7 @@ fn merge_fork() {
         vec![pk0, pk2, pk1]
     };
 
-    assert_eq!(merge_chains(lhs, rhs), Ok(expected))
+    assert_eq!(join_chains(lhs, rhs), Ok(expected))
 }
 
 #[test]
@@ -578,7 +603,7 @@ fn self_verify() {
     let (_, pk4, sig4) = gen_signed_keypair(&sk3);
     let fork_chain = make_chain(pk1, vec![(&pk1, pk3, sig3), (&pk3, pk4, sig4)]);
 
-    assert_eq!(main_chain.merge(fork_chain), Ok(()));
+    assert_eq!(main_chain.join(fork_chain), Ok(()));
     assert!(main_chain.self_verify());
 
     // create another fork (from root key) with valid signatures
@@ -590,7 +615,7 @@ fn self_verify() {
     let (_, pk6, sig6) = gen_signed_keypair(&sk5);
     let fork_chain = make_chain(pk0, vec![(&pk0, pk5, sig5), (&pk5, pk6, sig6)]);
 
-    assert_eq!(main_chain.merge(fork_chain), Ok(()));
+    assert_eq!(main_chain.join(fork_chain), Ok(()));
     assert!(main_chain.self_verify());
 }
 
@@ -673,11 +698,11 @@ fn make_chain(
 }
 
 // Merge `rhs` into `lhs`, verify the resulting chain is valid and return a vector of its keys.
-fn merge_chains(
+fn join_chains(
     mut lhs: SecuredLinkedList,
     rhs: SecuredLinkedList,
 ) -> Result<Vec<bls::PublicKey>, Error> {
-    lhs.merge(rhs)?;
+    lhs.join(rhs)?;
     Ok(lhs.keys().copied().collect())
 }
 
