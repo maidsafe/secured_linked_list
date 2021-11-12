@@ -16,6 +16,8 @@ pub enum Error {
     FailedSignature,
     #[error("key not found in the chain")]
     KeyNotFound,
+    #[error("no sub-chain was found in the chain")]
+    SubChainNotFound,
     #[error("chain doesn't contain any trusted keys")]
     Untrusted,
     #[error("attempted operation is invalid")]

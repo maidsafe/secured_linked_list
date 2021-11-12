@@ -88,7 +88,7 @@ impl SecuredLinkedList {
     ///
     /// This succeeds only if the root key of one of the chain is present in the other one.
     /// Otherwise it returns `Error::InvalidOperation`
-    pub fn merge(&mut self, mut other: Self) -> Result<(), Error> {
+    pub fn join(&mut self, mut other: Self) -> Result<(), Error> {
         let root_index = if let Some(index) = self.index_of(other.root_key()) {
             index
         } else if let Some(index) = other.index_of(self.root_key()) {
@@ -121,13 +121,37 @@ impl SecuredLinkedList {
         from_key: &bls::PublicKey,
         to_key: &bls::PublicKey,
     ) -> Result<Self, Error> {
-        self.minimize(vec![from_key, to_key])
-    }
+        let from_index = self.index_of(from_key).ok_or(Error::KeyNotFound)?;
+        let mut chain = Self::new(if from_index == 0 {
+            self.root
+        } else {
+            self.tree[from_index - 1].key
+        });
 
-    /// Creates a sub-chain from a given key to the end.
-    /// Returns `Error::KeyNotFound` if the given from key is not present in the chain.
-    pub fn get_proof_chain_to_current(&self, from_key: &bls::PublicKey) -> Result<Self, Error> {
-        self.minimize(vec![from_key, self.last_key()])
+        let mut curr_index = self.index_of(to_key).ok_or(Error::KeyNotFound)?;
+        while curr_index != 0 && curr_index != from_index {
+            let block = &self.tree[curr_index - 1];
+            chain.tree.insert(
+                0,
+                Block {
+                    key: block.key,
+                    signature: block.signature.clone(),
+                    parent_index: 0, // we'll update it afterwards
+                },
+            );
+            curr_index = block.parent_index;
+        }
+
+        if curr_index != from_index {
+            // the 'from_key' is not an ancestor in any chain containing 'to_key'
+            Err(Error::SubChainNotFound)
+        } else {
+            for (i, elem) in chain.tree.iter_mut().enumerate() {
+                elem.parent_index = i;
+            }
+
+            Ok(chain)
+        }
     }
 
     /// Creates a minimal sub-chain of `self` that contains all `required_keys`.
