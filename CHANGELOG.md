@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/maidsafe/secured_linked_list/compare/v0.4.0...v0.5.0) (2021-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **api:** the 'merge' public API was renamed to 'join'
+
+### Bug Fixes
+
+* **api:** get_proof_chain was returning a subchain with forks in some cases ([a5b282e](https://github.com/maidsafe/secured_linked_list/commit/a5b282ef1bcc4c4b5d12e421b5014011916e28c1))
+
 ## [0.4.0](https://github.com/maidsafe/secured_linked_list/compare/v0.3.1...v0.4.0) (2021-11-11)
 
 
