@@ -1,6 +1,6 @@
 [package]
 name = "secured_linked_list"
-version = "0.5.0"
+version = "0.5.1"
 description = "A cryptographically secured and provable linked list"
 license = "MIT OR BSD-3-Clause"
 repository = "https://github.com/maidsafe/secured_linked_list"
