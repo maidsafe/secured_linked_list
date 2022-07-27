@@ -266,48 +266,46 @@ fn join() {
 
 #[test]
 fn join_with_branches() {
-    loop {
-        // create a main chain
-        //  0 -> b0_1 -> b0_2
-        //   |
-        //   +-> b1 -> b10
-        //        |
-        //        +-> b11
-        let (sk0, pk0) = gen_keypair();
-        // 0->b0_1->b0_2
-        let (b0_sk1, b0_pk1, b0_sig1) = gen_signed_keypair(&sk0);
-        let (_, b0_pk2, b0_sig2) = gen_signed_keypair(&b0_sk1);
-        // 0->b1
-        let (b1_sk, b1_pk, b1_sig) = gen_signed_keypair(&sk0);
-        // b1->b10
-        let (_, b10_pk, b10_sig) = gen_signed_keypair(&b1_sk);
-        // b1->b11
-        let (_, b11_pk, b11_sig) = gen_signed_keypair(&b1_sk);
+    // create a main chain
+    //  0 -> b0_1 -> b0_2
+    //   |
+    //   +-> b1 -> b10
+    //        |
+    //        +-> b11
+    let (sk0, pk0) = gen_keypair();
+    // 0->b0_1->b0_2
+    let (b0_sk1, b0_pk1, b0_sig1) = gen_signed_keypair(&sk0);
+    let (_, b0_pk2, b0_sig2) = gen_signed_keypair(&b0_sk1);
+    // 0->b1
+    let (b1_sk, b1_pk, b1_sig) = gen_signed_keypair(&sk0);
+    // b1->b10
+    let (_, b10_pk, b10_sig) = gen_signed_keypair(&b1_sk);
+    // b1->b11
+    let (_, b11_pk, b11_sig) = gen_signed_keypair(&b1_sk);
 
-        let main_chain = make_chain(
-            pk0,
-            vec![
-                (&pk0, b0_pk1, b0_sig1),
-                (&b0_pk1, b0_pk2, b0_sig2),
-                (&pk0, b1_pk, b1_sig),
-                (&b1_pk, b10_pk, b10_sig),
-                (&b1_pk, b11_pk, b11_sig),
-            ],
-        );
+    let main_chain = make_chain(
+        pk0,
+        vec![
+            (&pk0, b0_pk1, b0_sig1),
+            (&b0_pk1, b0_pk2, b0_sig2),
+            (&pk0, b1_pk, b1_sig),
+            (&b1_pk, b10_pk, b10_sig),
+            (&b1_pk, b11_pk, b11_sig),
+        ],
+    );
 
-        let mut chain = SecuredLinkedList::new(pk0);
-        // join from 0 till b11
-        let proof_b11 = main_chain.get_proof_chain(&pk0, &b11_pk).unwrap();
-        chain.join(proof_b11).unwrap();
-        // join from 0 till b0_2
-        let proof_b0_2 = main_chain.get_proof_chain(&pk0, &b0_pk2).unwrap();
-        chain.join(proof_b0_2).unwrap();
-        // join from 0 till b10
-        let proof_b10 = main_chain.get_proof_chain(&pk0, &b10_pk).unwrap();
-        chain.join(proof_b10).unwrap();
+    let mut chain = SecuredLinkedList::new(pk0);
+    // join from 0 till b11
+    let proof_b11 = main_chain.get_proof_chain(&pk0, &b11_pk).unwrap();
+    chain.join(proof_b11).unwrap();
+    // join from 0 till b0_2
+    let proof_b0_2 = main_chain.get_proof_chain(&pk0, &b0_pk2).unwrap();
+    chain.join(proof_b0_2).unwrap();
+    // join from 0 till b10
+    let proof_b10 = main_chain.get_proof_chain(&pk0, &b10_pk).unwrap();
+    chain.join(proof_b10).unwrap();
 
-        assert_eq!(main_chain.len(), chain.len())
-    }
+    assert_eq!(main_chain.len(), chain.len())
 }
 
 #[test]
