@@ -390,27 +390,36 @@ impl SecuredLinkedList {
     fn insert_block(&mut self, new_block: Block) -> usize {
         // Find the index into `self.tree` to insert the new block at so that the block order as
         // described in the `SecuredLinkedList` doc comment is maintained.
-        let insert_at = self
+        let same_block = self
             .tree
             .iter()
             .enumerate()
             .skip(new_block.parent_index)
             .find(|(_, block)| {
-                block.parent_index != new_block.parent_index || block.key >= new_block.key
+                block.parent_index == new_block.parent_index && block.key == new_block.key
             })
-            .map(|(index, _)| index)
-            .unwrap_or(self.tree.len());
+            .map(|(index, _)| index);
 
         // If the key already exists in the chain, do nothing but still return success to make the
         // `insert` operation idempotent.
-        if self.tree.get(insert_at).map(|block| &block.key) != Some(&new_block.key) {
-            self.tree.insert(insert_at, new_block);
-
-            // Adjust the parent indices of the keys whose parents are after the inserted key.
-            for block in &mut self.tree[insert_at + 1..] {
-                if block.parent_index > insert_at {
-                    block.parent_index += 1;
-                }
+        let insert_at = match same_block {
+            Some(index) => return index + 1,
+            None => self
+                .tree
+                .iter()
+                .enumerate()
+                .skip(new_block.parent_index)
+                .find(|(_, block)| {
+                    block.parent_index != new_block.parent_index || block.key >= new_block.key
+                })
+                .map(|(index, _)| index)
+                .unwrap_or(self.tree.len()),
+        };
+        self.tree.insert(insert_at, new_block);
+        // Adjust the parent indices of the keys whose parents are after the inserted key.
+        for block in &mut self.tree[insert_at + 1..] {
+            if block.parent_index > insert_at {
+                block.parent_index += 1;
             }
         }
 
