@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.4](https://github.com/maidsafe/secured_linked_list/compare/v0.5.3...v0.5.4) (2022-08-01)
+
+
+### Bug Fixes
+
+* check for same block while inserting ([d4ae4cf](https://github.com/maidsafe/secured_linked_list/commit/d4ae4cfdca7b6a82ab0a581023a7b2de7af00d10))
+
 ### [0.5.3](https://github.com/maidsafe/secured_linked_list/compare/v0.5.2...v0.5.3) (2022-07-20)
 
 ### [0.5.2](https://github.com/maidsafe/secured_linked_list/compare/v0.5.1...v0.5.2) (2022-06-14)
